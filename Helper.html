@@ -1,0 +1,153 @@
+<HTML>
+	<head>
+		<meta content="text/html; charset=UTF-8" http-equiv="content-type">
+		<title>Flat file helper</title>
+		<script type='text/javascript' src="jquery-1.4.2.min.js"></script>
+		<script type='text/javascript' src="rule.js"></script>
+		<script type='text/javascript' src="dept.js"></script>
+		<script type='text/javascript' src="helper.js"></script>
+        <script type='text/javascript' src="autoPrepare.js"></script>
+		<link charset="utf-8" rel="stylesheet" type="text/css" href="helper.css">
+	</head>
+	<BODY>
+	<div id=menu class='view'>
+		<div id=title><h1>Helper</h1></div>
+	    <ul>
+		    <li des='flatFilFormatContent' class='clickable' onclick='changeHelper(this)'>Flat File Helper</li>
+		    <li des='umsMailHelper' class='clickable' onclick='changeHelper(this)'>UMS Mail Helper</li>
+		    <li des='autoRole' class='clickable' onclick='changeHelper(this)'>Auto Data Prepare</li>
+		</ul>
+	</div>
+	<div id=mainCon class='view'>
+	<table id='flatFilFormatContent' class='contentTb'>
+		<tr class='h4Tr'>
+			<td>
+				<h4>Flat file input</h4>
+			</td>
+			<td>
+				<h4>&nbsp;</h4>
+			</td>
+			<td>
+				<h4>Flat file rule : 
+					<select id='selRule' onchange = 'setRule()'>
+						<option value = ''>NO RULE</option>
+						<option value = 'JOB'>JOB</option>
+						<option value = 'SNPJOBF'>SNPJOBF</option>
+						<option value = 'CHG_ID'>CHG_ID</option>
+						<option value = 'SNPECONTACT'>SNPECONTACT</option>
+						<option value = 'SNPADDR'>SNPADDR</option>
+						<option value = 'SNPPER'>SNPPER</option>
+						<option value = 'SNPPHONE'>SNPPHONE</option>
+						<option value = 'SNPCOMPEN'>SNPCOMPEN</option>
+							<option value = 'DEL_ID'>DEL_ID</option>
+						</select>
+						<input id='setAutoBtn' class='hide clickable' value='Set value auto' type='button' onclick='setAuto()'/>
+					</h4>
+			</td>
+			<td>
+				<h4>&nbsp;</h4>
+			</td>
+			<td>
+				<h4>Flat file output</h4>
+			</td>
+		</tr>
+		<tr>
+			<td class='textTd'>
+				<div id = 'inputFlatFile' class=block>
+					<textarea></textarea>
+				</div>
+			</td>
+			<td class='buttonRow'>
+				<div class=block>
+				    <input type=button  id='splitFile' class='button block clickable' value='>' onclick='splitFile()'/>
+				</div>
+			</td>
+			<td valign="top">
+				<div id = 'ruleFlatFile' class=block>
+					<table>
+						<thead>
+							<tr>
+								<td colspan=4><label id='log' class=error></label></td>
+							</tr>
+							<tr>
+								<td colspan=4>&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="fieldName">Field name</td>
+								<td class="startPos">Start pos</td>
+								<td class="endPos">End pos</td>
+								<td class="value">Value</td>
+								<td class='keep'>Keep</td>
+							</tr>
+							<tr id="templete">
+								<td class="fieldName"><input></td>
+								<td class="startPos"><input></td>
+								<td class="endPos"><input></td>
+								<td class="value">
+									<div class='discription'></div>
+									<input>
+								</td>
+								<td class="keep"><input type='checkbox'/></td>
+							</tr>
+						</thead>
+						<tbody id='ruleTbody'>
+						</tbody>
+					</table>
+				</div>
+			</td>
+			<td class='buttonRow'>
+				<div class=block>
+					<input type=button id='combineFile' value='>' class='button block clickable' onclick='combineFile()'/>
+				</div>
+			</td>
+			<td class='textTd'>
+				<div id = 'outputFlatFile' class=block>
+					<textarea></textarea>
+				</div>
+			</td>
+		</tr>
+	</table>
+	<table id='umsMailHelper' class='contentTb'>
+			<thead>
+				<tr class='h4Tr'>
+					<td>&nbsp;</td>
+					<td>
+						<h4>Mail/SMS in body tag</h4>
+					</td>
+					<td>&nbsp;</td>
+					<td>
+						<h4>Mail Format</h4>
+					</td>
+					<td>&nbsp;</td>
+				</tr>
+			</thead>
+		<tbody>
+			<tr>
+				<td>&nbsp;</td>
+				<td colspan=4 class='warning'>
+					Please paste the content in the body tag!
+				</td>
+			</tr>
+			<tr class='h4Tr' valign=top>
+				<td>&nbsp;</td>
+				<td class='htmlSrc htmlDis'>
+					<textarea onkeyup='formatHTML()'></textarea>
+				</td>
+				<td>&nbsp;</td>
+				<td class='htmlDes htmlDis'>
+					<label id='showFormat'></label>
+					<label id='hideFormat'></label>
+				</td>
+				<td>&nbsp;</td>
+			</tr>
+		</tbody>
+	</table>
+	<div id='autoRole' class='contentTb'>
+	</div>
+	<script>
+        $('#menu li').eq(2).click();
+        createNewCondition("#autoRole");
+
+	</script>
+	</BODY>
+</HTML> 
