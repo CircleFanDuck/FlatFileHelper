@@ -16,5 +16,8 @@ function getDeptDetail(key){
 	}
 }
 
-deptMap["	P01TBT10--	"]="	1,1,1	";
-deptMap["	P01TBT12--	"]="	2,2,2	";
+//SQL: use to refre the  DB value
+//SELECT  'deptMap["', KEY_M, '"]="', VALUE_X, '";' FROM RES_CONFIG where value_x like '%,%,%' and key_m like 'P01%'
+
+deptMap["	P011	"]="	1,1,1	";
+deptMap["	P012	"]="	2,2,2	";
