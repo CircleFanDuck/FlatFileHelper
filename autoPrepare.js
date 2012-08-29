@@ -228,8 +228,7 @@ Properties = [
 		}
 		return base.parent();
 	}
-	BaseRole.fn.addRoleMultiple = function(properties, batchIndex, filter, defaultVal){
-
+	BaseRole.fn.addRoleMultiple = function(properties, baseRole, filter, defaultVal){
 		if($.trim(defaultVal)!=''){
 			var defaultArr = [defaultVal];
 			while(defaultArr[0].indexOf('NA')>=0){
@@ -238,12 +237,18 @@ Properties = [
 				defaultArr.push(val.replace('NA','N'));
 			}
 		}
-		var index = batchIndex;
-		for(var p in defaultArr){
-			index = this.addRole(properties, index, filter, defaultArr[p]);
-			this.clearErrorRole(index-1);
+		var offset = 0;
+		function addRoleSingle(){
+			var index = baseRole.index;
+		    var val = defaultArr[offset];
+			baseRole.index  = baseRole.addRole(properties, index, filter, val);
+			baseRole.clearErrorRole(index-1);
+			offset++;
+			if(offset<defaultArr.length){
+			    setTimeout(addRoleSingle,10);
+			}
 		}
-		return index;
+		addRoleSingle();
 	}
 
 	BaseRole.fn.clearErrorRole = function(batchIndex){
@@ -373,7 +378,8 @@ Properties = [
 		var label = td.appendNewEle('label').addClass('error');
 		btnClear.click(function(){
 			baseRole.roleCon.empty().appendNewEle('tr').addClass('emptyNotice')
-				.appendNewEle('td').appendNewEle('label').text('');
+				.appendNewEle('td').appendNewEle('label').text(EMPTY);
+			baseRole.index=0;
 		})
 		btn.click(function(){
 			var defaultVal = valInput.val();
@@ -382,7 +388,7 @@ Properties = [
 				return;
 			}
 			var properties = baseRole.properties;
-			baseRole.index = baseRole.addRoleMultiple(properties, baseRole.index, {0:['title']}, defaultVal);
+			baseRole.addRoleMultiple(properties, baseRole, {0:['title']}, defaultVal);
 		})
 		valInput.change(function(){
 			label.empty();
