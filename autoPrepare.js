@@ -242,7 +242,7 @@ Properties = [
 			var index = baseRole.index;
 		    var val = defaultArr[offset];
 			baseRole.index  = baseRole.addRole(properties, index, filter, val);
-			baseRole.clearErrorRole(index-1);
+			baseRole.clearErrorRole(index);
 			offset++;
 			if(offset<defaultArr.length){
 			    setTimeout(addRoleSingle,10);
