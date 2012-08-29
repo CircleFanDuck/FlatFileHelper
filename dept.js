@@ -1,19 +1,38 @@
 var deptMap = {};
+var deptIdMap = {};
 var trimed = false;
 function getDeptDetail(key){
     if(!trimed){
 	    deptMapOri = deptMap;
 		deptMap = {};
 		for(var p in deptMapOri){
-			deptMap[jQuery.trim(p)]=jQuery.trim(deptMapOri[p]);
+		    var arr = jQuery.trim(deptMapOri[p]).split(',');
+			var key = jQuery.trim(p);
+			deptMap[key] = arr;
+			if(!deptIdMap[arr[2]]){
+			    deptIdMap[arr[2]] = [];
+			}
+			deptIdMap[arr[2]].push(key);
 		}
 		trimed = true;
 	}
 	if(deptMap[key]){
-	    return deptMap[key];
+	    return deptMap[key].join(', ');
 	}else{
 	    return '<label class=error>Not exist!</label>'
 	}
+}
+
+function getRandomDept(){
+    var deptArr = ['B','T','C','K'];
+    var random = a.getSeconds();
+	return deptArr[random%deptArr.length];
+}
+
+function getRandomDeptIdByDept(dept){
+    var deptIdArr = deptIdMap[dept]
+    var random = a.getSeconds();
+	return deptIdArr[random%deptIdArr.length];
 }
 
 //SQL: use to refre the  DB value
