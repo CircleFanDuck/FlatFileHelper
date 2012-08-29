@@ -62,7 +62,7 @@ function roles(eles, condition){
 			}
 		}
 
-		if(ele.val==EMPTY){
+		if(ele.val()==EMPTY){
 			ele.addClass('error');
 		}
 	})
@@ -150,11 +150,49 @@ Properties = [
 		type:'button',
 		click:function(eles, condition){
 			if(eles.filter('.error').length>0){
-				eles.filter('.note').html('<span class=error>Error exist!</span>')
+				eles.filter('.note').html('<span class=error>Error exist!</span>');
+				return null;
 			}
+			
+			
 		}
 	}
 ];
+
+var offsetPreDate = 0;
+var offsetAfterDate = 1;
+var SQLArr = {
+    'condition_0_PREPARE': [
+		"DELETE STAFF_WORK WHERE IC_N = '${icN}';",
+		"DELETE STAFF_TRANSFER WHERE IC_N = '${icN}';",
+		"DELETE STAFF_SECTION_UNIT WHERE IC_N '${icN}';",
+		"DELETE STAFF WHERE IC_N '${icN}';",
+	],
+	'condition_1_Y' : [//Current staff work exist
+	    "INSERT INTO STAFF_WORK(staff_n, ic_n, home_department_c, section_n, unit_c, start_dt, end_dt, work_department_c, nts_i, appointment_type_c, roster_scheme_n) VALUES ('${staffN}', '${icN}', '${deptC}', '${sectionN}', '${unitC}', TO_DATE('${sysdate}','DD/MM/YYYY')-" + offsetPreDate + ", TO_DATE('${sysdate}','DD/MM/YYYY')+" + offsetAfterDate + ", '${deptC}','1','J','0')"
+	],
+	'condition_2_Y' : [//Future staff work exist
+	    "INSERT INTO STAFF_WORK(staff_n, ic_n, home_department_c, section_n, unit_c, start_dt, end_dt, work_department_c, nts_i, appointment_type_c, roster_scheme_n) VALUES ('${staffN}', '${icN}', '${deptC}', '${sectionN}', '${unitC}', TO_DATE('${sysdate}','DD/MM/YYYY')+" + offsetAfterDate + ", null, '${deptC}','1','J','0')"
+	],
+	'condition_3_Y' : [//Future section unit exist
+	    "IINSERT INTO staff_section_unit(ic_n, section_n, unit_c, effective_d) VALUES('${icN}', 'A','B', TO_DATE('${sysdate}','DD/MM/YYYY') + " + offsetAfterDate + ")"
+	],
+	'condition_4_Y' : [//Future transfer unit exist
+	    "INSERT INTO staff_transfer(ic_n,transfer_d,out_department_c,in_department_c)  VALUES ('${icN}',TO_DATE('${sysdate}','DD/MM/YYYY') + " + offsetAfterDate + ", 'AA','BB')"
+	],
+	'deptIdPre': function( sq ){
+	    //use it wihtout any guilty......
+		var re = {};
+		sq = ''+sq;
+		var staffN = 'Q0000';
+		var icN = 'QQ0000000';
+		re['staffN'] = staffN.substring(0, staffN.length-sq.length)+sq;
+		re['icN'] = icN.substring(0, icN.length-sq.length)+sq;
+		
+		var flatfileDept = 
+	
+	}
+};
 
 (function(exports){
 
@@ -228,6 +266,9 @@ Properties = [
 		}
 		return base.parent();
 	}
+	BaseRole.fn.bindParse = function(autoParse){
+	    
+	}
 	BaseRole.fn.addRoleMultiple = function(properties, baseRole, filter, defaultVal){
 		if($.trim(defaultVal)!=''){
 			var defaultArr = [defaultVal];
@@ -242,7 +283,9 @@ Properties = [
 			var index = baseRole.index;
 		    var val = defaultArr[offset];
 			baseRole.index  = baseRole.addRole(properties, index, filter, val);
-			baseRole.clearErrorRole(index);
+			setTimeout(function(){
+			    baseRole.clearErrorRole(index);
+			},5)
 			offset++;
 			if(offset<defaultArr.length){
 			    setTimeout(addRoleSingle,10);
@@ -322,7 +365,7 @@ Properties = [
 	* */
 	function AutoParse(baseRole){
 		this.bindCreateHandler(baseRole);
-
+		baseRole.bindParse(this)
 		return;
        this.createCondition(baseId);
 	}
