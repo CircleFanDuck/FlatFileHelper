@@ -11,6 +11,12 @@ var EMPTY_VAL='-';
 var Y = 'Y';
 var N = 'N';
 var NA=[Y,N];
+
+var STAFF_N_LENGTH = 5;
+var IC_N_LENGTH = 9;
+var BASIC_STRING = '0000000000';
+
+
 function roles(eles, condition){
 	var val = [];
 	var conditions = {};
@@ -36,7 +42,8 @@ function roles(eles, condition){
 		'1,13':(conditions[1]==N&&conditions[13]!=N),
 		'2,21': (conditions[2]==N&&conditions[21]==Y),
 		'2,22': (conditions[2]==N&&conditions[22]==Y),
-		'21,22':(conditions[21]==N&&conditions[22]==Y)
+		'21,22':(conditions[21]==N&&conditions[22]==Y),
+		'3,4':(conditions[21]==Y&&conditions[22]==Y)
 	};
 	var errorMap = {};
 	for(var p in rolesMap){
@@ -61,12 +68,14 @@ function roles(eles, condition){
 				ele.removeClass('error');
 			}
 		}
-
 		if(ele.val()==EMPTY){
 			ele.addClass('error');
 		}
 	})
-	ele.removeClass('error');
+	
+	if(ele.val()!=EMPTY){
+		ele.removeClass('error');
+	}
 }
 Properties = [
 	{//1
@@ -124,26 +133,26 @@ Properties = [
 		change:roles
 	},
 	{//10
-		condition:6,
+		condition:5,
 		title:'Action Code:',
 		val:[EMPTY, 'A', 'C', 'D'],
 		change:roles
 	},
 	{//11
-		condition:7,
+		condition:6,
 		title:'Next Action Code:',
 		val:[EMPTY, ' ', 'EXTEND', 'REHIRE'],
 		change:roles
 	},
 	{//12
-		condition:8,
+		condition:7,
 		title:'',
 		val:'',
 		tag:'span',
 		klass:'note'
 	},
 	{//13
-		condition:9,
+		condition:8,
 		title:'',
 		val:'Parse',
 		tag:'input',
@@ -159,40 +168,78 @@ Properties = [
 	}
 ];
 
-var offsetPreDate = 0;
-var offsetAfterDate = 1;
-var SQLArr = {
-    'condition_0_PREPARE': [
-		"DELETE STAFF_WORK WHERE IC_N = '${icN}';",
-		"DELETE STAFF_TRANSFER WHERE IC_N = '${icN}';",
-		"DELETE STAFF_SECTION_UNIT WHERE IC_N '${icN}';",
-		"DELETE STAFF WHERE IC_N '${icN}';",
-	],
-	'condition_1_Y' : [//Current staff work exist
-	    "INSERT INTO STAFF_WORK(staff_n, ic_n, home_department_c, section_n, unit_c, start_dt, end_dt, work_department_c, nts_i, appointment_type_c, roster_scheme_n) VALUES ('${staffN}', '${icN}', '${deptC}', '${sectionN}', '${unitC}', TO_DATE('${sysdate}','DD/MM/YYYY')-" + offsetPreDate + ", TO_DATE('${sysdate}','DD/MM/YYYY')+" + offsetAfterDate + ", '${deptC}','1','J','0')"
-	],
-	'condition_2_Y' : [//Future staff work exist
-	    "INSERT INTO STAFF_WORK(staff_n, ic_n, home_department_c, section_n, unit_c, start_dt, end_dt, work_department_c, nts_i, appointment_type_c, roster_scheme_n) VALUES ('${staffN}', '${icN}', '${deptC}', '${sectionN}', '${unitC}', TO_DATE('${sysdate}','DD/MM/YYYY')+" + offsetAfterDate + ", null, '${deptC}','1','J','0')"
-	],
-	'condition_3_Y' : [//Future section unit exist
-	    "IINSERT INTO staff_section_unit(ic_n, section_n, unit_c, effective_d) VALUES('${icN}', 'A','B', TO_DATE('${sysdate}','DD/MM/YYYY') + " + offsetAfterDate + ")"
-	],
-	'condition_4_Y' : [//Future transfer unit exist
-	    "INSERT INTO staff_transfer(ic_n,transfer_d,out_department_c,in_department_c)  VALUES ('${icN}',TO_DATE('${sysdate}','DD/MM/YYYY') + " + offsetAfterDate + ", 'AA','BB')"
-	],
-	'deptIdPre': function( sq ){
-	    //use it wihtout any guilty......
-		var re = {};
-		sq = ''+sq;
-		var staffN = 'Q0000';
-		var icN = 'QQ0000000';
-		re['staffN'] = staffN.substring(0, staffN.length-sq.length)+sq;
-		re['icN'] = icN.substring(0, icN.length-sq.length)+sq;
-		
-		var flatfileDept = 
-	
+var DEPT_MAP = {
+	1 : {
+		'YYY':"'0','ADM','B'",
+		'YYN':"'0','LOG','B'",
+		'YNN':"'0','LS0','C'",
+		3:['0','PLG'],
+		4:['B'],
+		'NNN':null
+	},
+	2 : {
+		'YYY': "'3','3','K'",
+		'YYN': "'4','4','K'",
+		'YNN': "'1','1','T'",
+		'NNN':null
+	},
+	13:{
+		'Y': "'0','ADM','B'",
+		'N': "'10',' ','KE'"
 	}
-};
+}
+
+
+function formatBasic(para){
+	var re = {};
+	if(!para.prefix){
+	    para.prefix = 'Q';
+	}
+	re['staffN'] = (para.prefix + BASIC_STRING).substring(0, STAFF_N_LENGTH-sq.length)+ para.sq;
+	re['icN']    = (para.prefix + BASIC_STRING).substring(0, IC_N_LENGTH-sq.length)+ para.sq;
+	re['startDt'] = TO_DATE('"+re['+para.sysdate+']+"','DD/MM/YYYY') - (para.offsetPreDate?para.offsetPreDate:0);
+	re['endDt'] = TO_DATE('"+re['+para.sysdate+']+"','DD/MM/YYYY') + (para.offsetAfterDate?para.offsetAfterDate:1);
+
+	var condition = para.condition;
+	re['cDeptId'] = DEPT_MAP[1][condition[1]+condition[11]+condition[12]];
+	re['fDeptId'] = DEPT_MAP[2](condition[2]+condition[21]+condition[22]);
+	re['oDeptId'] = DEPT_MAP[13](condition[13]);
+	
+	var flatfileDept;
+}
+function formatSql(para){
+    
+	var env = formatBasic(para);
+	
+	var SQLArr = [
+			"DELETE STAFF_WORK WHERE IC_N = '"+ re['icN'] +"';",
+			"DELETE STAFF_TRANSFER WHERE IC_N = '"+ re['icN'] +"';",
+			"DELETE STAFF_SECTION_UNIT WHERE IC_N '"+ re['icN'] +"';",
+			"DELETE STAFF WHERE IC_N '"+ re['icN'] +"';",
+		];
+	
+	var staffWork = ['oDeptId', 'cDeptId', 'fDeptId'];
+	
+	for(var p in staffWork){
+	    if(re[staffWork[p]]){
+			var deptId = re[staffWork[p]];
+			SQLArr.push( "INSERT INTO STAFF_WORK(staff_n, ic_n, home_department_c, section_n, unit_c, start_dt, end_dt, work_department_c, nts_i, appointment_type_c, roster_scheme_n) VALUES ('"
+			+re['staffN']+"', '"+ re['icN'] +"', " + deptId + "," + re['startDt'] + "," + re['endDt'] + ", 'A','1','J','0')");
+		}
+	}
+	
+
+
+	var SQLArr = {
+		'condition_3_Y' : [//Future section unit exist
+			"IINSERT INTO staff_section_unit(ic_n, section_n, unit_c, effective_d) VALUES('"+ re['icN'] +"', 'A','B', TO_DATE('"+re['sysdate']+"','DD/MM/YYYY') + " + re['endDt'] + ")"
+		],
+		'condition_4_Y' : [//Future transfer unit exist
+			"INSERT INTO staff_transfer(ic_n,transfer_d,out_department_c,in_department_c)  VALUES ('"+ re['icN'] +"',TO_DATE('"+re['sysdate']+"','DD/MM/YYYY') + " + re['endDt'] + ", 'AA','BB')"
+		]
+	};
+}
+
 
 (function(exports){
 
