@@ -12,7 +12,7 @@ var Y = 'Y';
 var N = 'N';
 var NA=[Y,N];
 
-var STAFF_N_LENGTH = 5;
+var STAFF_N_LENGTH = 4;
 var IC_N_LENGTH = 9;
 var BASIC_STRING = '0000000000';
 
@@ -43,7 +43,9 @@ function roles(eles, condition){
 		'2,21': (conditions[2]==N&&conditions[21]==Y),
 		'2,22': (conditions[2]==N&&conditions[22]==Y),
 		'21,22':(conditions[21]==N&&conditions[22]==Y),
-		'3,4':(conditions[21]==Y&&conditions[22]==Y)
+		'3,4':(conditions[21]==Y&&conditions[22]==Y),
+		'1,2,4':(conditions[1]==Y&&conditions[2]==Y&&conditions[4]==N),
+		'1,2,3':(conditions[1]==Y&&conditions[2]==Y&&conditions[3]==Y)
 	};
 	var errorMap = {};
 	for(var p in rolesMap){
@@ -157,88 +159,36 @@ Properties = [
 		val:'Parse',
 		tag:'input',
 		type:'button',
-		click:function(eles, condition){
+		check:function(eles, condition){
 			if(eles.filter('.error').length>0){
 				eles.filter('.note').html('<span class=error>Error exist!</span>');
-				return null;
+				return false;
 			}
-			
-			
+			return true;
 		}
 	}
 ];
 
 var DEPT_MAP = {
 	1 : {
-		'YYY':"'0','ADM','B'",
-		'YYN':"'0','LOG','B'",
-		'YNN':"'0','LS0','C'",
+		'YYY':["'0'","'ADM'","'B'"],
+		'YYN':["'0'","'LOG'","'B'"],
+		'YNN':["'0'","'LS0'","'C'"],
 		3:['0','PLG'],
 		4:['B'],
 		'NNN':null
 	},
 	2 : {
-		'YYY': "'3','3','K'",
-		'YYN': "'4','4','K'",
-		'YNN': "'1','1','T'",
+		'YYY': ["'3'","'3'","'K'"],
+		'YYN': ["'4'","'4'","'K'"],
+		'YNN': ["'1'","'1'","'T'"],
 		'NNN':null
 	},
 	13:{
-		'Y': "'0','ADM','B'",
-		'N': "'10',' ','KE'"
+		'Y': ["'0'","'ADM'","'B'"],
+		'N': ["'10'","' '","'KE'"]
 	}
-}
-
-
-function formatBasic(para){
-	var re = {};
-	if(!para.prefix){
-	    para.prefix = 'Q';
-	}
-	re['staffN'] = (para.prefix + BASIC_STRING).substring(0, STAFF_N_LENGTH-sq.length)+ para.sq;
-	re['icN']    = (para.prefix + BASIC_STRING).substring(0, IC_N_LENGTH-sq.length)+ para.sq;
-	re['startDt'] = TO_DATE('"+re['+para.sysdate+']+"','DD/MM/YYYY') - (para.offsetPreDate?para.offsetPreDate:0);
-	re['endDt'] = TO_DATE('"+re['+para.sysdate+']+"','DD/MM/YYYY') + (para.offsetAfterDate?para.offsetAfterDate:1);
-
-	var condition = para.condition;
-	re['cDeptId'] = DEPT_MAP[1][condition[1]+condition[11]+condition[12]];
-	re['fDeptId'] = DEPT_MAP[2](condition[2]+condition[21]+condition[22]);
-	re['oDeptId'] = DEPT_MAP[13](condition[13]);
-	
-	var flatfileDept;
-}
-function formatSql(para){
-    
-	var env = formatBasic(para);
-	
-	var SQLArr = [
-			"DELETE STAFF_WORK WHERE IC_N = '"+ re['icN'] +"';",
-			"DELETE STAFF_TRANSFER WHERE IC_N = '"+ re['icN'] +"';",
-			"DELETE STAFF_SECTION_UNIT WHERE IC_N '"+ re['icN'] +"';",
-			"DELETE STAFF WHERE IC_N '"+ re['icN'] +"';",
-		];
-	
-	var staffWork = ['oDeptId', 'cDeptId', 'fDeptId'];
-	
-	for(var p in staffWork){
-	    if(re[staffWork[p]]){
-			var deptId = re[staffWork[p]];
-			SQLArr.push( "INSERT INTO STAFF_WORK(staff_n, ic_n, home_department_c, section_n, unit_c, start_dt, end_dt, work_department_c, nts_i, appointment_type_c, roster_scheme_n) VALUES ('"
-			+re['staffN']+"', '"+ re['icN'] +"', " + deptId + "," + re['startDt'] + "," + re['endDt'] + ", 'A','1','J','0')");
-		}
-	}
-	
-
-
-	var SQLArr = {
-		'condition_3_Y' : [//Future section unit exist
-			"IINSERT INTO staff_section_unit(ic_n, section_n, unit_c, effective_d) VALUES('"+ re['icN'] +"', 'A','B', TO_DATE('"+re['sysdate']+"','DD/MM/YYYY') + " + re['endDt'] + ")"
-		],
-		'condition_4_Y' : [//Future transfer unit exist
-			"INSERT INTO staff_transfer(ic_n,transfer_d,out_department_c,in_department_c)  VALUES ('"+ re['icN'] +"',TO_DATE('"+re['sysdate']+"','DD/MM/YYYY') + " + re['endDt'] + ", 'AA','BB')"
-		]
-	};
-}
+};
 
 
 (function(exports){
@@ -313,8 +263,38 @@ function formatSql(para){
 		}
 		return base.parent();
 	}
-	BaseRole.fn.bindParse = function(autoParse){
-	    
+	BaseRole.fn.setParse = function(autoParse){
+	    if(autoParse){
+			this.autoParse = autoParse
+		}
+	}
+	BaseRole.fn.bindParse = function(index, autoParse){
+	    this.setParse(autoParse);
+		if(!this.autoParse){
+		    return 'Can not Parse without bind parse mod.'
+		}
+		
+		var conditionEles = this.roleCon.find('.condition_'+index+' [condition]');
+		var conditions = {};
+		for(var i = 0; i<conditionEles.length; i++){
+		    var ele = conditionEles.eq(i);
+			var val = ele.val();
+			if(!val){
+			    val = ele.text();
+			}
+		    conditions[ele.attr('condition')] = val;
+		}
+		
+		var env = {};
+		env['condition'] = conditions;
+		env['sq'] =''+index;
+		env['sysdate'] = '04/09/2012';
+		
+		//TODO: option settings prefix:,sysdate:,offsetPreDate:,offsetAfterDate:
+		
+		env['SQLArr'] = this.autoParse.formatSql(env);
+		this.autoParse.publish(env);
+		
 	}
 	BaseRole.fn.addRoleMultiple = function(properties, baseRole, filter, defaultVal){
 		if($.trim(defaultVal)!=''){
@@ -330,6 +310,7 @@ function formatSql(para){
 			var index = baseRole.index;
 		    var val = defaultArr[offset];
 			baseRole.index  = baseRole.addRole(properties, index, filter, val);
+			
 			setTimeout(function(){
 			    baseRole.clearErrorRole(index);
 			},5)
@@ -356,11 +337,10 @@ function formatSql(para){
 		}
 	}
 	BaseRole.fn.addRole = function(properties, batchIndex, filter, defaultVal){
-		var batchClass = 'condition_'+ (batchIndex++);
+		var batchClass = 'condition_'+ batchIndex;
 		if(batchIndex=='title'){
 			batchClass = 'title_0';
 			batchIndex = 0;
-
 		}
 		for(var index in properties){
 			var property = properties[index];
@@ -393,15 +373,28 @@ function formatSql(para){
 			var newEle = this.formatEle(tr, batchClass, val);
 			tr.append(newEle);
 		}
+		
+		var inputs = this.roleCon.find('.'+batchClass).find('input,select');
 		if(defaultVal){
-			var inputs = this.roleCon.find('.'+batchClass).find('input,select');
 			var vals = defaultVal.split(',');
 			for(var p in vals){
 				inputs.eq(p).val(vals[p]);
 			}
 			inputs.eq(0).trigger('change');
 		}
-
+		
+		if(inputs.length>0){
+			var bindIndex = batchIndex;
+			var bRole = this;
+			inputs.filter('[condition=8]').bind('click',function(){
+				var pass = $(this).eq(0).trigger('check');
+				if(pass){
+					bRole.bindParse(bindIndex);
+				}
+			});
+		}
+		
+		batchIndex++;
 		return batchIndex;
 	};
 
@@ -412,53 +405,122 @@ function formatSql(para){
 	* */
 	function AutoParse(baseRole){
 		this.bindCreateHandler(baseRole);
-		baseRole.bindParse(this)
-		return;
-       this.createCondition(baseId);
+		baseRole.setParse(this);
 	}
 	AutoParse.fn = AutoParse.prototype;
 
-	AutoParse.fn.createCondition = function(baseId){
-
-		var base = $(baseId);
-		if(base.filter('[index]').size()==0){
-			base.attr('index','0');
+	AutoParse.fn.publish = function(env){
+	    console.log('===Start publish for Condition ['+env.condition[7]+"].")
+	    
+		var SQLArr = env['SQLArr'].SettingSQLArr
+		for(var i in SQLArr){
+	        console.log(SQLArr[i])
 		}
-		base.attr('index', base.attr('index')*1+1);
-		var indexOfCon = 'con'+base.attr('index');
-
-		var conditions = base.find('tr');
-		conditions.each(function(index){
-		    var removeClass = indexOfCon;
-			var base = baseId;
-			var example = $(this).find('.example').html();
-			var td = $(this).append('<td class="con"></td>').find('td:last');
-			td.addClass(indexOfCon).html(example);
-			td.find('input[type=button]').addClass('clickable');
-			//bind remove btn
-			td.find('.removeCondition').click(function(){
-			    $(base).find('.'+removeClass).remove();
-			})
-		})
-		this.bindParseStatus(base.find('.'+indexOfCon));
-		this.registerAddBtn(baseId, indexOfCon);
-	}
-	AutoParse.fn.setConditionArr = function(condition, eles){
-	    var arr = condition.splite(',');
-		for(var p in arr){
-			ele.find('.condition'+p).children().val(arr[p]);
+	    console.log('---Help SQL')
+		var SQLArr = env['SQLArr'].EnquireSQLArr
+		for(var i in SQLArr){
+	        console.log(SQLArr[i])
 		}
 	}
-	AutoParse.fn.registerAddBtn = function(baseId){
-		$('#addConditionBtn').unbind('click').bind('click',function(){
-			createNewCondition(baseId)
-		})
+		
+	AutoParse.fn.formatBasic = function(para){
+		var re = {};
+		if(!para.prefix){
+			para.prefix = 'Q';
+		}
+		
+		re['staffN'] = (para.prefix + BASIC_STRING).substring(0, STAFF_N_LENGTH-para.sq.length)+ para.sq;
+		re['icN']    = "'"+(para.prefix + BASIC_STRING).substring(0, IC_N_LENGTH-para.sq.length)+ para.sq+"'";
+		re['startDt'] = "TO_DATE('"+para.sysdate+"','DD/MM/YYYY') - " + (para.offsetPreDate?para.offsetPreDate:0);
+		re['endDt'] = "TO_DATE('"+para.sysdate+"','DD/MM/YYYY') + " + (para.offsetAfterDate?para.offsetAfterDate:1);
+
+		var condition = para.condition;
+		var cDeptId = DEPT_MAP[1][condition[1]+condition[11]+condition[12]];
+		var fDeptId = DEPT_MAP[2][condition[2]+condition[21]+condition[22]];
+		var oDeptId = DEPT_MAP[13][condition[13]];
+		re['cDeptId-staffN'] = "'"+cDeptId[2].substring(1,2) + re['staffN']+"'";
+		re['fDeptId-staffN'] = "'"+fDeptId[2].substring(1,2) + re['staffN']+"'";
+		re['oDeptId-staffN'] = "'"+oDeptId[2].substring(1,2) + re['staffN']+"'";
+		re['cDeptId'] = cDeptId.join(',');
+		re['fDeptId'] = fDeptId.join(',');
+		re['oDeptId'] = oDeptId.join(',');
+		
+		//set unit section record
+		if(condition[3]==Y){
+			//section_n, unit_c, effective_d
+			re['sectionTransfer'] = {
+				'section_n': DEPT_MAP[1][3][0],
+				'unit_c': DEPT_MAP[1][3][1]
+			}
+		}
+		
+		//set transfer record
+		if(condition[4]==Y){
+			//transfer_d,out_department_c,in_department_c
+			re['deptTransfer'] = {
+				'out_department_c': cDeptId[2],
+				'in_department_c': fDeptId[2]
+			}
+		}
+		
+		return re;
 	}
-	AutoParse.fn.bindParseStatus = function(tds){
-		tds.find('input,select').change(function(){
-			tds.find('.parse').removeAttr('disabled');
-		})
+	
+	AutoParse.fn.formatSql = function(para){
+		var env = this.formatBasic(para);
+		
+		//prepare sql, delete all exist record for select staff
+		var SettingSQLArr = [
+				"DELETE STAFF_WORK WHERE IC_N = "+ env['icN'] + ";",
+				"DELETE STAFF_TRANSFER WHERE IC_N = "+ env['icN'] + ";",
+				"DELETE STAFF_SECTION_UNIT WHERE IC_N = "+ env['icN'] + ";",
+				"DELETE STAFF WHERE IC_N = "+ env['icN'] + ";",
+				"INSERT INTO staff(ic_n,staff_m,employment_dt,termination_dt,actual_staff_m,user_id,designation_c,personal_id_n) VALUES("+ env['icN']+",'nameKnown',TO_DATE('19900101', 'yyyymmdd'), TO_DATE('20200101', 'yyyymmdd'),'nameKnown','userId',NULL,'0000');"
+			];
+		
+		//get dept and section/unit for each type
+		if(env['cDeptId']){
+			var deptId = env['cDeptId'];
+			var staffN = env['cDeptId-staffN'];
+			var SQL = "INSERT INTO STAFF_WORK(staff_n, ic_n, section_n, unit_c, home_department_c, start_dt, end_dt, work_department_c, nts_i, appointment_type_c, roster_scheme_n) VALUES ("
+				+staffN+", "+ env['icN'] +", " + deptId + "," + env['startDt'] + "," + env['endDt'] + ", 'A','1','J','0');"
+			SettingSQLArr.push(SQL );
+		}
+		if(env['fDeptId']){
+			var deptId = env['fDeptId'];
+			var staffN = env['fDeptId-staffN'];
+			var SQL = "INSERT INTO STAFF_WORK(staff_n, ic_n, section_n, unit_c, home_department_c, start_dt, end_dt, work_department_c, nts_i, appointment_type_c, roster_scheme_n) VALUES ("
+				+staffN+", "+ env['icN'] +", " + deptId + "," + env['endDt'] + ", null , 'A','1','J','0');"
+			SettingSQLArr.push(SQL );
+		}
+		
+		if(env['deptTransfer']){
+			var deptTransfer = env['deptTransfer'];
+			var SQL = "INSERT INTO staff_transfer(ic_n,transfer_d,out_department_c,in_department_c)  VALUES ("
+			+ env['icN'] +"," + env['endDt'] + ", "+deptTransfer['out_department_c']+", "+deptTransfer['in_department_c']+");"
+			SettingSQLArr.push( SQL );
+		}
+		
+		if(env['sectionTransfer']){
+			var sectionTransfer = env['sectionTransfer'];
+			var SQL = "IINSERT INTO staff_section_unit(ic_n, section_n, unit_c, effective_d) VALUES("
+			+ env['icN'] +", "+sectionTransfer['section_n']+", "+sectionTransfer['unit_c']+", " + env['endDt'] + ");";
+			SettingSQLArr.push(SQL);
+		}
+		
+		var EnquireSQLArr = [
+				"SELECT * FROM STAFF_WORK WHERE IC_N = "+ env['icN'] + ";",
+				"SELECT * FROM STAFF_TRANSFER WHERE IC_N = "+ env['icN'] + ";",
+				"SELECT * FROM STAFF_SECTION_UNIT WHERE IC_N = "+ env['icN'] + ";",
+				"SELECT * FROM STAFF WHERE IC_N = "+ env['icN'] + ";"
+		];
+		return {
+		    SettingSQLArr: SettingSQLArr,
+			EnquireSQLArr: EnquireSQLArr
+		};
 	}
+
+	
 	AutoParse.fn.bindCreateHandler = function(baseRole){
 		var colspan =  baseRole.roleCon.find('tr:first').find('td').length;
 		var td = baseRole.headCon.appendNewEle('tr').appendNewEle('td').attr('colspan', 2);
@@ -483,16 +545,17 @@ function formatSql(para){
 		valInput.change(function(){
 			label.empty();
 		})
-		return {
-			btn: btn,
-			msg: label,
-			input: valInput
-		}
+	}
+	
+	AutoParse.fn.bindPublishHandle = function(baseRole){
+	    
+	}
+	AutoParse.fn.publishResult = function(result){
+	
 	}
 	//define outside
     exports.createNewCondition = function(baseId, defaultVal){
-		var baseRole = new BaseRole('autoRole', Properties);
-		//var create = baseRole.bindCreateHandler();
+		var baseRole = new BaseRole(baseId, Properties);
 	    return new AutoParse(baseRole);
 	}
 })(window);
