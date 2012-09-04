@@ -6,6 +6,9 @@
 		margin:0px;
 		font-size: 12px;
 	}
+	li{
+		list-style-type:none;
+	}
 	input,textarea,select{
 		margin: 0px 3px;
 	}
@@ -37,19 +40,22 @@
 	}
 	#menu ul{
 	    padding-top:28px;
+	}
+	.menu ul{
 		float:left;
 		font-weight:bold;
 		position: relative;
 		bottom:0px;
 	}
 	#menu ul li{
+		padding:7px 10px;
+	}
+	.menu ul li{
 		float:left;
 		clear:none;
-		padding:7px 10px;
-		list-style-type:none;
 		color:white;
 	}
-	#menu ul li.selected{
+	.menu ul li.selected{
 	    background-color:white;
 		color:#6E6E6E;
 	}
@@ -209,4 +215,40 @@
 	}
 	.autoRoleCon div{
 		width:92px;
+	}
+	#parseResult{
+	    margin-top:10px;
+	}
+	#parseResult ul{
+	    width: 100%;
+	}
+	#parseResult .menu ul{
+		border:1px solid gray;
+		border-width:1px 0 0 1px;
+	}
+	#parseResult .menu li{
+	    padding: 3px 3px 0 3px;
+		border:1px solid gray;
+		border-width:0 1px 1px 0;
+		width:350px;
+	}
+	#parseResult .selected{
+	    background-color: #EEEEEE;
+	}
+	#parseResult .content{
+	    clear:left;
+		float:left;
+	}
+	#parseResult .sqlBlock{
+		display:none;
+	}
+	#parseResult .content li{
+	    width:100%;
+	}
+	#parseResult .content li textarea{
+	    width:100%;
+		overflow:display;
+		padding:0px;
+		margin: -1px 0px 0px 0px;
+		height:300px;
 	}

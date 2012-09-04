@@ -293,8 +293,7 @@ var DEPT_MAP = {
 		//TODO: option settings prefix:,sysdate:,offsetPreDate:,offsetAfterDate:
 		
 		env['SQLArr'] = this.autoParse.formatSql(env);
-		this.autoParse.publish(env);
-		
+		this.autoParse.publishBoard.trigger('publish', env);
 	}
 	BaseRole.fn.addRoleMultiple = function(properties, baseRole, filter, defaultVal){
 		if($.trim(defaultVal)!=''){
@@ -403,26 +402,13 @@ var DEPT_MAP = {
 	* Export outside
 	*
 	* */
-	function AutoParse(baseRole){
-		this.bindCreateHandler(baseRole);
+	function AutoParse(baseRole, publishId){
+		this.bindCreateHandler(baseRole, publishId);
+		this.bindPublishHandle(publishId);
 		baseRole.setParse(this);
 	}
 	AutoParse.fn = AutoParse.prototype;
 
-	AutoParse.fn.publish = function(env){
-	    console.log('===Start publish for Condition ['+env.condition[7]+"].")
-	    
-		var SQLArr = env['SQLArr'].SettingSQLArr
-		for(var i in SQLArr){
-	        console.log(SQLArr[i])
-		}
-	    console.log('---Help SQL')
-		var SQLArr = env['SQLArr'].EnquireSQLArr
-		for(var i in SQLArr){
-	        console.log(SQLArr[i])
-		}
-	}
-		
 	AutoParse.fn.formatBasic = function(para){
 		var re = {};
 		if(!para.prefix){
@@ -476,14 +462,13 @@ var DEPT_MAP = {
 		var env = this.formatBasic(para);
 		
 		//prepare sql, delete all exist record for select staff
-		var SettingSQLArr = [
+		var RemoveSQLArr = [
 				"DELETE STAFF_WORK WHERE IC_N = "+ env['icN'] + ";",
 				"DELETE STAFF_TRANSFER WHERE IC_N = "+ env['icN'] + ";",
 				"DELETE STAFF_SECTION_UNIT WHERE IC_N = "+ env['icN'] + ";",
-				"DELETE STAFF WHERE IC_N = "+ env['icN'] + ";",
-				"INSERT INTO staff(ic_n,staff_m,employment_dt,termination_dt,actual_staff_m,user_id,designation_c,personal_id_n) VALUES("+ env['icN']+",'nameKnown',TO_DATE('19900101', 'yyyymmdd'), TO_DATE('20200101', 'yyyymmdd'),'nameKnown','userId',NULL,'0000');"
+				"DELETE STAFF WHERE IC_N = "+ env['icN'] + ";"
 			];
-		
+		var SettingSQLArr = ["INSERT INTO staff(ic_n,staff_m,employment_dt,termination_dt,actual_staff_m,user_id,designation_c,personal_id_n) VALUES(" + env['icN'] + ",'nameKnown',TO_DATE('19900101', 'yyyymmdd'), TO_DATE('20200101', 'yyyymmdd'),'nameKnown','userId',NULL,'0000');"];
 		//get dept and section/unit for each type
 		if(env['cDeptId']){
 			var deptId = env['cDeptId'];
@@ -521,8 +506,10 @@ var DEPT_MAP = {
 				"SELECT * FROM STAFF WHERE IC_N = "+ env['icN'] + ";"
 		];
 		return {
-		    SettingSQLArr: SettingSQLArr,
-			EnquireSQLArr: EnquireSQLArr
+		    RemoveSQLArr: RemoveSQLArr,
+			SettingSQLArr: SettingSQLArr,
+			EnquireSQLArr: EnquireSQLArr,
+			icN : env['icN']
 		};
 	}
 
@@ -552,17 +539,53 @@ var DEPT_MAP = {
 			label.empty();
 		})
 	}
-	
-	AutoParse.fn.bindPublishHandle = function(baseRole){
-	    
-	}
-	AutoParse.fn.publishResult = function(result){
-	
+	AutoParse.fn.bindPublishHandle = function(publishId){
+	    this.publishBoard = $('#'+publishId);
+		var root = this.publishBoard;
+	    var publishTitle = root.appendNewEle('div').attr('class','menu').appendNewEle('ul').attr('class', 'title menu');
+		var publishBoard = root.appendNewEle('div').appendNewEle('ul').attr('class', 'content');
+
+		root.bind('publish',function(event, para1){
+			var env = para1;
+		    var icN = env['SQLArr']['icN'];
+		    var index = icN.substring(1, icN.length-1) +'-'+env.sysdate+'-'+env.condition[7]
+		    var title = publishTitle.appendNewEle('li').attr('index', index);
+			title.appendNewEle('span').text(index);
+			
+			var con = publishBoard.appendNewEle('li').attr('class', 'sqlContent').attr('index', index);
+			var RemoveSQLArr = env['SQLArr'].RemoveSQLArr;
+			var SettingSQLArr = env['SQLArr'].SettingSQLArr;
+			var EnquireSQLArr = env['SQLArr'].EnquireSQLArr;
+			var blocks = ['RemoveSQLArr','SettingSQLArr','EnquireSQLArr'];
+			var sqlArr = ['--------------------'+index];
+			for(var i=0; i < blocks.length; i++){
+			    var blockName =  blocks[i];
+				var sqls = env['SQLArr'][blockName];
+			    con.appendNewEle('div').attr('class', blockName+' sqlBlock')
+				    .html('<span>'+ sqls.join('</span><span>')  + '</span>');
+			    sqlArr.push('--------------------' + blocks[i]);
+				sqlArr.push(sqls.join('\n'))
+			    sqlArr.push('');
+			}
+			con.appendNewEle('textarea').val(sqlArr.join('\n'))
+			
+			title.trigger('click', index);
+		})
+		
+		publishTitle.delegate('li','click',function(event, index){
+		    root.find('.selected').removeClass('selected')
+		    var index = $(this).addClass('selected').attr('index');
+			publishBoard.trigger('change', index);
+		})
+		
+		publishBoard.bind('change',function(event, index){
+			publishBoard.find('li').hide().filter('[index="'+ index +'"]').show();
+		})
 	}
 	//define outside
-    exports.createNewCondition = function(baseId, defaultVal){
+    exports.createNewCondition = function(baseId, publishId){
 		var baseRole = new BaseRole(baseId, Properties);
-	    return new AutoParse(baseRole);
+	    return new AutoParse(baseRole, publishId);
 	}
 })(window);
 
