@@ -44,8 +44,8 @@ function roles(eles, condition){
 		'2,22': (conditions[2]==N&&conditions[22]==Y),
 		'21,22':(conditions[21]==N&&conditions[22]==Y),
 		'3,4':(conditions[21]==Y&&conditions[22]==Y),
-		'1,2,4':(conditions[1]==Y&&conditions[2]==Y&&conditions[4]==N),
-		'1,2,3':(conditions[1]==Y&&conditions[2]==Y&&conditions[3]==Y)
+		'1,2,4':((conditions[1]==N||conditions[2]==N)&&conditions[4]==Y),
+		'1,2,3':((conditions[1]==N&&conditions[2]==N)&&conditions[3]==Y)
 	};
 	var errorMap = {};
 	for(var p in rolesMap){
@@ -438,12 +438,18 @@ var DEPT_MAP = {
 		var cDeptId = DEPT_MAP[1][condition[1]+condition[11]+condition[12]];
 		var fDeptId = DEPT_MAP[2][condition[2]+condition[21]+condition[22]];
 		var oDeptId = DEPT_MAP[13][condition[13]];
-		re['cDeptId-staffN'] = "'"+cDeptId[2].substring(1,2) + re['staffN']+"'";
-		re['fDeptId-staffN'] = "'"+fDeptId[2].substring(1,2) + re['staffN']+"'";
-		re['oDeptId-staffN'] = "'"+oDeptId[2].substring(1,2) + re['staffN']+"'";
-		re['cDeptId'] = cDeptId.join(',');
-		re['fDeptId'] = fDeptId.join(',');
-		re['oDeptId'] = oDeptId.join(',');
+		if(cDeptId){
+		    re['cDeptId-staffN'] = "'"+cDeptId[2].substring(1,2) + re['staffN']+"'";
+			re['cDeptId'] = cDeptId.join(',');
+		}
+		if(fDeptId){
+		    re['fDeptId-staffN'] = "'"+fDeptId[2].substring(1,2) + re['staffN']+"'";
+			re['fDeptId'] = fDeptId.join(',');
+		}
+		if(oDeptId){
+			re['oDeptId-staffN'] = "'"+oDeptId[2].substring(1,2) + re['staffN']+"'";
+			re['oDeptId'] = oDeptId.join(',');
+		}
 		
 		//set unit section record
 		if(condition[3]==Y){
@@ -562,7 +568,7 @@ var DEPT_MAP = {
 
 
 
- $.fn.appendNewEle = function(a, type){
+$.fn.appendNewEle = function(a, type){
  	var ele = document.createElement(a);
 	if(type){
 		ele.type = type;
