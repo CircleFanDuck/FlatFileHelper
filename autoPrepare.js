@@ -43,8 +43,9 @@ function roles(eles, condition){
 		'2,21': (conditions[2]==N&&conditions[21]==Y),
 		'2,22': (conditions[2]==N&&conditions[22]==Y),
 		'21,22':(conditions[21]==N&&conditions[22]==Y),
-		'3,4':(conditions[21]==Y&&conditions[22]==Y),
-		'1,2,4':((conditions[1]==N||conditions[2]==N)&&conditions[4]==Y),
+		'3,4':(conditions[3]==Y&&conditions[4]==Y),
+		'1,2,4':((conditions[1]==N||conditions[2]==N)&&conditions[4]==Y)
+			||((conditions[1]==Y&&conditions[2]==Y)&&conditions[4]==N),
 		'1,2,3':((conditions[1]==N&&conditions[2]==N)&&conditions[3]==Y)
 	};
 	var errorMap = {};
@@ -80,6 +81,12 @@ function roles(eles, condition){
 	}
 }
 Properties = [
+	{//0
+		condition:'TransId',
+		title:'Trans id:',
+		val:['JOB', 'SNPJOBF'],
+		change:roles
+	},
 	{//1
 		condition:1,
 		title:'Staff work current exist:',
@@ -135,13 +142,13 @@ Properties = [
 		change:roles
 	},
 	{//10
-		condition:5,
+		condition:'Action',
 		title:'Action Code:',
 		val:[EMPTY, 'A', 'C', 'D'],
 		change:roles
 	},
 	{//11
-		condition:6,
+		condition:'nextAction',
 		title:'Next Action Code:',
 		val:[EMPTY, ' ', 'EXTEND', 'REHIRE'],
 		change:roles
@@ -171,23 +178,24 @@ Properties = [
 
 var DEPT_MAP = {
 	1 : {
-		'YYY':["'0'","'ADM'","'B'"],
-		'YYN':["'0'","'LOG'","'B'"],
-		'YNN':["'0'","'LS0'","'C'"],
+		'YYY': 'P01TBT10--', //deptMap["	P01TBT10--	"]="	0,ADM,B	"; ["'0'","'ADM'","'B'"]
+		'YYN': 'P01TBT12--', //deptMap["	P01TBT12--	"]="	0,LOG,B	"; ["'0'","'LOG'","'B'"]
+		'YNN': 'P01TCL29--', //deptMap["	P01TCL29--	"]="	0,LOG,C	"; ["'0'","'LOG'","'C'"]
 		3:['0','PLG'],
 		4:['B'],
 		'NNN':null
 	},
 	2 : {
-		'YYY': ["'3'","'3'","'K'"],
-		'YYN': ["'4'","'4'","'K'"],
-		'YNN': ["'1'","'1'","'T'"],
+		'YYY': 'P01TBT10--', //deptMap["	P01TBT10--	"]="	0,ADM,B	"; ["'0'","'ADM'","'B'"]
+		'YYN': 'P01TBT12--', //deptMap["	P01TBT12--	"]="	0,LOG,B	"; ["'0'","'LOG'","'B'"]
+		'YNN': 'P01TTP60--', //deptMap["	P01TTP60--	"]="	1,1,T	"; ["'1'","'1'","'T'"]
 		'NNN':null
 	},
 	13:{
-		'Y': ["'0'","'ADM'","'B'"],
-		'N': ["'10'","' '","'KE'"]
+		'Y': 'P01TBT10--',//deptMap["	P01TBT10--	"]="	0,ADM,B	";  ["'0'","'ADM'","'B'"]
+		'N': 'P01EKE10--' //deptMap["	P01EKE10--	"]="	10, ,KE	"; ["'10'","' '","'KE'"]
 	}
+
 };
 
 
@@ -288,7 +296,7 @@ var DEPT_MAP = {
 		var env = {};
 		env['condition'] = conditions;
 		env['sq'] =''+index;
-		env['sysdate'] = '04/09/2012';
+		env['sysdate'] = '20120904';
 		
 		//TODO: option settings prefix:,sysdate:,offsetPreDate:,offsetAfterDate:
 		
@@ -320,7 +328,6 @@ var DEPT_MAP = {
 		}
 		addRoleSingle();
 	}
-
 	BaseRole.fn.clearErrorRole = function(batchIndex){
 		var eles = this.roleCon.find('.condition_'+batchIndex);
 		var errors = eles.find('.error')
@@ -408,6 +415,19 @@ var DEPT_MAP = {
 		baseRole.setParse(this);
 	}
 	AutoParse.fn = AutoParse.prototype;
+	
+	AutoParse.fn.parstDeptId = function(deptId){
+	    if(!deptId){
+		    return null;
+		}
+		
+	    var deptIdArr = getDeptDetail(deptId).split(',');
+		for(var i in deptIdArr){
+		    deptIdArr[i] = "'" + deptIdArr[i] + "'";
+		}
+		
+		return deptIdArr;
+	}
 
 	AutoParse.fn.formatBasic = function(para){
 		var re = {};
@@ -416,14 +436,19 @@ var DEPT_MAP = {
 		}
 		
 		re['staffN'] = (para.prefix + BASIC_STRING).substring(0, STAFF_N_LENGTH-para.sq.length)+ para.sq;
-		re['icN']    = "'"+(para.prefix + BASIC_STRING).substring(0, IC_N_LENGTH-para.sq.length)+ para.sq+"'";
-		re['startDt'] = "TO_DATE('"+para.sysdate+"','DD/MM/YYYY') - " + (para.offsetPreDate?para.offsetPreDate:0);
-		re['endDt'] = "TO_DATE('"+para.sysdate+"','DD/MM/YYYY') + " + (para.offsetAfterDate?para.offsetAfterDate:1);
+		re['icN']  = (para.prefix + BASIC_STRING).substring(0, IC_N_LENGTH-para.sq.length)+ para.sq;
+		re['icNinSQL'] = "'" + re['icN'] + "'";
+		re['startDt'] = "TO_DATE('"+para.sysdate+"','YYYYMMDD') - " + (para.offsetPreDate?para.offsetPreDate:0);
+		re['endDt'] = "TO_DATE('"+para.sysdate+"','YYYYMMDD') + " + (para.offsetAfterDate?para.offsetAfterDate:1);
 
 		var condition = para.condition;
-		var cDeptId = DEPT_MAP[1][condition[1]+condition[11]+condition[12]];
-		var fDeptId = DEPT_MAP[2][condition[2]+condition[21]+condition[22]];
-		var oDeptId = DEPT_MAP[13][condition[13]];
+		var cDeptIdString = DEPT_MAP[1][condition[1]+condition[11]+condition[12]];
+		var fDeptIdString = DEPT_MAP[2][condition[2]+condition[21]+condition[22]];
+		var oDeptIdString = DEPT_MAP[13][condition[13]];
+		
+		var cDeptId = this.parstDeptId(cDeptIdString);
+		var fDeptId = this.parstDeptId(fDeptIdString);
+		var oDeptId = this.parstDeptId(oDeptIdString);
 		if(cDeptId){
 		    re['cDeptId-staffN'] = "'"+cDeptId[2].substring(1,2) + re['staffN']+"'";
 			re['cDeptId'] = cDeptId.join(',');
@@ -441,8 +466,8 @@ var DEPT_MAP = {
 		if(condition[3]==Y){
 			//section_n, unit_c, effective_d
 			re['sectionTransfer'] = {
-				'section_n': DEPT_MAP[1][3][0],
-				'unit_c': DEPT_MAP[1][3][1]
+				'section_n': "'"+DEPT_MAP[1][3][0]+"'",
+				'unit_c': "'"+DEPT_MAP[1][3][1]+"'"
 			}
 		}
 		
@@ -455,6 +480,11 @@ var DEPT_MAP = {
 			}
 		}
 		
+		re['message'] = {
+		    deptId: DEPT_MAP[1]['YYY'],
+			oldDeptId: oDeptIdString
+		}
+		
 		return re;
 	}
 	
@@ -463,54 +493,79 @@ var DEPT_MAP = {
 		
 		//prepare sql, delete all exist record for select staff
 		var RemoveSQLArr = [
-				"DELETE STAFF_WORK WHERE IC_N = "+ env['icN'] + ";",
-				"DELETE STAFF_TRANSFER WHERE IC_N = "+ env['icN'] + ";",
-				"DELETE STAFF_SECTION_UNIT WHERE IC_N = "+ env['icN'] + ";",
-				"DELETE STAFF WHERE IC_N = "+ env['icN'] + ";"
+				"DELETE STAFF_WORK WHERE IC_N = "+ env['icNinSQL'] + ";",
+				"DELETE STAFF_TRANSFER WHERE IC_N = "+ env['icNinSQL'] + ";",
+				"DELETE STAFF_SECTION_UNIT WHERE IC_N = "+ env['icNinSQL'] + ";",
+				"DELETE STAFF WHERE IC_N = "+ env['icNinSQL'] + ";"
 			];
-		var SettingSQLArr = ["INSERT INTO staff(ic_n,staff_m,employment_dt,termination_dt,actual_staff_m,user_id,designation_c,personal_id_n) VALUES(" + env['icN'] + ",'nameKnown',TO_DATE('19900101', 'yyyymmdd'), TO_DATE('20200101', 'yyyymmdd'),'nameKnown','userId',NULL,'0000');"];
+		var SettingSQLArr = ["INSERT INTO staff(ic_n,staff_m,employment_dt,termination_dt,actual_staff_m,user_id,designation_c,personal_id_n) VALUES(" + env['icNinSQL'] + ",'nameKnown',TO_DATE('19900101', 'yyyymmdd'), TO_DATE('20200101', 'yyyymmdd'),'nameKnown','userId',NULL,'0000');"];
 		//get dept and section/unit for each type
 		if(env['cDeptId']){
 			var deptId = env['cDeptId'];
 			var staffN = env['cDeptId-staffN'];
 			var SQL = "INSERT INTO STAFF_WORK(staff_n, ic_n, section_n, unit_c, home_department_c, start_dt, end_dt, work_department_c, nts_i, appointment_type_c, roster_scheme_n) VALUES ("
-				+staffN+", "+ env['icN'] +", " + deptId + "," + env['startDt'] + "," + env['endDt'] + ", 'A','1','J','0');"
+				+staffN+", "+ env['icNinSQL'] +", " + deptId + "," + env['startDt'] + "," + env['endDt'] + ", 'A','1','J','0');"
 			SettingSQLArr.push(SQL );
 		}
 		if(env['fDeptId']){
 			var deptId = env['fDeptId'];
 			var staffN = env['fDeptId-staffN'];
 			var SQL = "INSERT INTO STAFF_WORK(staff_n, ic_n, section_n, unit_c, home_department_c, start_dt, end_dt, work_department_c, nts_i, appointment_type_c, roster_scheme_n) VALUES ("
-				+staffN+", "+ env['icN'] +", " + deptId + "," + env['endDt'] + ", null , 'A','1','J','0');"
+				+staffN+", "+ env['icNinSQL'] +", " + deptId + "," + env['endDt'] + ", null , 'A','1','J','0');"
 			SettingSQLArr.push(SQL );
 		}
 		
 		if(env['deptTransfer']){
 			var deptTransfer = env['deptTransfer'];
 			var SQL = "INSERT INTO staff_transfer(ic_n,transfer_d,out_department_c,in_department_c)  VALUES ("
-			+ env['icN'] +"," + env['endDt'] + ", "+deptTransfer['out_department_c']+", "+deptTransfer['in_department_c']+");"
+			+ env['icNinSQL'] +"," + env['endDt'] + ", "+deptTransfer['out_department_c']+", "+deptTransfer['in_department_c']+");"
 			SettingSQLArr.push( SQL );
 		}
 		
 		if(env['sectionTransfer']){
 			var sectionTransfer = env['sectionTransfer'];
-			var SQL = "IINSERT INTO staff_section_unit(ic_n, section_n, unit_c, effective_d) VALUES("
-			+ env['icN'] +", "+sectionTransfer['section_n']+", "+sectionTransfer['unit_c']+", " + env['endDt'] + ");";
+			var SQL = "INSERT INTO staff_section_unit(ic_n, section_n, unit_c, effective_d) VALUES("
+			+ env['icNinSQL'] +", "+sectionTransfer['section_n']+", "+sectionTransfer['unit_c']+", " + env['endDt'] + ");";
 			SettingSQLArr.push(SQL);
 		}
 		
 		var EnquireSQLArr = [
-				"SELECT * FROM STAFF_WORK WHERE IC_N = "+ env['icN'] + ";",
-				"SELECT * FROM STAFF_TRANSFER WHERE IC_N = "+ env['icN'] + ";",
-				"SELECT * FROM STAFF_SECTION_UNIT WHERE IC_N = "+ env['icN'] + ";",
-				"SELECT * FROM STAFF WHERE IC_N = "+ env['icN'] + ";"
+				"SELECT * FROM STAFF_WORK WHERE IC_N = "+ env['icNinSQL'] + ";",
+				"SELECT * FROM STAFF_TRANSFER WHERE IC_N = "+ env['icNinSQL'] + ";",
+				"SELECT * FROM STAFF_SECTION_UNIT WHERE IC_N = "+ env['icNinSQL'] + ";",
+				"SELECT * FROM STAFF WHERE IC_N = "+ env['icNinSQL'] + ";"
 		];
+		
+		/*
+		*	map[startPos] = {
+		*		startPos : startPos,
+		*		endPos : endPos,
+		*		value : value
+		*	};
+		*/
+		var role = RULE[para.condition['TransId']]
+		var msgEnv = {};
+		for(var i=0; i<role.length; i++){
+		    var r = role[i];
+			var name = r[0]
+		    var value = env[name]||para.condition[name]||env['message'][name]||r[3];
+			if(!value)value = ''
+			msgEnv[r[1]] = {
+			    startPos : r[1],
+				endPos : r[2],
+				value : value
+			}
+		}
+		var msg = combineFile(msgEnv);
+		
 		return {
 		    RemoveSQLArr: RemoveSQLArr,
 			SettingSQLArr: SettingSQLArr,
 			EnquireSQLArr: EnquireSQLArr,
+			FlatFile: [msg+'<<<END'],
 			icN : env['icN']
 		};
+		
 	}
 
 	
@@ -548,15 +603,24 @@ var DEPT_MAP = {
 		root.bind('publish',function(event, para1){
 			var env = para1;
 		    var icN = env['SQLArr']['icN'];
-		    var index = icN.substring(1, icN.length-1) +'-'+env.sysdate+'-'+env.condition[7]
+		    var index = icN +'-'+env.sysdate+'-'+env.condition[7];	
+			
+			var exist = publishTitle.find('li[index="'+ index +'"]');
+			if(exist.length>0){
+			    exist.click();
+				return;
+			}
+			
 		    var title = publishTitle.appendNewEle('li').attr('index', index);
-			title.appendNewEle('span').text(index);
+			title.appendNewEle('div').attr('class', 'corner')
+			title.appendNewEle('span').attr('class','title').text(index);
+			title.appendNewEle('div').attr('class','close').attr('index', index).text('X');
 			
 			var con = publishBoard.appendNewEle('li').attr('class', 'sqlContent').attr('index', index);
 			var RemoveSQLArr = env['SQLArr'].RemoveSQLArr;
 			var SettingSQLArr = env['SQLArr'].SettingSQLArr;
 			var EnquireSQLArr = env['SQLArr'].EnquireSQLArr;
-			var blocks = ['RemoveSQLArr','SettingSQLArr','EnquireSQLArr'];
+			var blocks = ['RemoveSQLArr','SettingSQLArr','EnquireSQLArr','FlatFile'];
 			var sqlArr = ['--------------------'+index];
 			for(var i=0; i < blocks.length; i++){
 			    var blockName =  blocks[i];
@@ -567,19 +631,35 @@ var DEPT_MAP = {
 				sqlArr.push(sqls.join('\n'))
 			    sqlArr.push('');
 			}
+			
 			con.appendNewEle('textarea').val(sqlArr.join('\n'))
 			
-			title.trigger('click', index);
+			title.click();
 		})
 		
-		publishTitle.delegate('li','click',function(event, index){
+		publishTitle.delegate('li','click',function(event){
+		    if($(this).filter('.selected').length>0){
+			    return;
+			}		
 		    root.find('.selected').removeClass('selected')
 		    var index = $(this).addClass('selected').attr('index');
 			publishBoard.trigger('change', index);
+			return false;
 		})
 		
+		publishTitle.delegate('.selected .close','click',function(event){
+		    var index = $(this).attr('index');
+		    publishBoard.trigger('remove', index);
+		})
+	
 		publishBoard.bind('change',function(event, index){
 			publishBoard.find('li').hide().filter('[index="'+ index +'"]').show();
+		})
+		
+		publishBoard.bind('remove',function(event, index){
+			publishTitle.find('li[index="'+ index +'"]').remove();
+			publishBoard.find('li[index="'+ index +'"]').remove();
+			publishTitle.find('li:last').click();
 		})
 	}
 	//define outside
