@@ -120,7 +120,7 @@
 				return;
 			}
 			var value = jQuery.trim(file.substring(startPos, endPos));
-			if('Trans Id'==fieldName && value!=ruleName){
+			if('TransId'==fieldName && value!=ruleName){
 			    //handle dif rule selected status
 			    $('#selRule').val(value);
 				if($('#selRule').val()!=value){
@@ -138,7 +138,7 @@
 			
 			if(idNeedTransMap[fieldName]){
 			    var discription = getDeptDetail(value);
-				var discriptionContent = rule.find('.discription').width('30%').show()
+				var discriptionContent = rule.find('.discription').width('29%').show()
 			    discriptionContent.html(discription);
 				rule.find('.value input').width('68%');
 			}else{
@@ -149,8 +149,8 @@
 		printMsg('');
 	}
 	
-	function combineFile(){
-	    var map = {};
+	function combineFileByDom(){
+		var map = {};
 		var rules = $('#ruleTbody tr');
 		for(var i=0; i<rules.length; i++){
 		    var rule = $(rules[i]);
@@ -171,21 +171,27 @@
 			}
 			
 			map[startPos] = {
-			    fieldName : fieldName,
 			    startPos : startPos,
 			    endPos : endPos,
-			    value : value,
-				length: (endPos-startPos)
+			    value : value
 			};
 		}
-		
+		var message = combineFile(map);
+		$('#outputFlatFile textarea').val(message);
+	}
+	/*
+	*	map[startPos] = {
+	*		startPos : startPos,
+	*		endPos : endPos,
+	*		value : value
+	*	};
+	*/
+	function combineFile(map){
 		var startArr = []
+		var sortBase = '00000';
 		for(var start in map){
 		    var s = ''+start;
-			while(s.length<5){
-			    s = '0'+s;
-			}
-			startArr.push(s);
+			startArr.push(sortBase.substring(0, sortBase.length - s.length)+s);
 		}
 		startArr = startArr.sort();
 		
@@ -199,25 +205,24 @@
 				    result.push(base);
 					length+=base.length;
 				}else{
-				    var addition = base.substring(0,(rule.startPos-length));
+				    var addition = base.substring(0, (rule.startPos-length));
 				    result.push(addition);
 					length+=addition.length;
 				}
 			}
 			result.push(rule.value);
-			length+=rule.value.length
-			if(rule.length>value.length){
-				while(length<rule.endPos){
-					if(rule.endPos-length>base.length){
-						result.push(base);
-						length+=base.length;
-					}else{
-						var addition = base.substring(0,(rule.endPos-length));
-						result.push(addition);
-						length+=addition.length;
-					}
+			length = length + rule.value.length
+			while(length<rule.endPos){
+				if(rule.endPos-length>base.length){
+					result.push(base);
+					length+=base.length;
+				}else{
+					var addition = base.substring(0,(rule.endPos-length));
+					result.push(addition);
+					length+=addition.length;
 				}
 			}
 		}
-		$('#outputFlatFile textarea').val(result.join(''));
+		
+		return result.join('');
 	}
