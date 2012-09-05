@@ -1,4 +1,3 @@
-
 	*{
 		font-family:Arial;
 		color: #6E6E6E;
@@ -54,6 +53,7 @@
 		float:left;
 		clear:none;
 		color:white;
+	    cursor: pointer; 
 	}
 	.menu ul li.selected{
 	    background-color:white;
@@ -130,7 +130,7 @@
 	    width:100%;
 	}
 	.clickable{
-		cursor:hand;
+	    cursor: pointer; 
 	}
 	.error{
 	    color:red;
@@ -222,18 +222,18 @@
 	#parseResult ul{
 	    width: 100%;
 	}
-	#parseResult .menu ul{
-		border:1px solid gray;
-		border-width:1px 0 0 1px;
+	#parseResult ul.menu{
+		border-left: 1px solid gray;
 	}
-	#parseResult .menu li{
-	    padding: 3px 3px 0 3px;
-		border:1px solid gray;
-		border-width:0 1px 1px 0;
-		width:350px;
+	#parseResult .menu li {
+		background-color: #EEEEEE;
+		border: 1px solid gray;
+		border-width: 1px 1px 1px 0;
+		padding:0px 5px;
+		margin-bottom: -1px;
 	}
-	#parseResult .selected{
-	    background-color: #EEEEEE;
+	#parseResult li.selected{
+	    background-color: white;
 	}
 	#parseResult .content{
 	    clear:left;
@@ -249,6 +249,31 @@
 	    width:100%;
 		overflow:display;
 		padding:0px;
-		margin: -1px 0px 0px 0px;
+		margin: 0px;
 		height:300px;
+	}
+	.menu li.selected .corner{
+		border-color:red;
+	}
+	.menu li  span{
+		clear:none;
+		float:left;
+		margin:2px;
+	}
+	.menu li .corner {
+		border:1px solid gray;
+		clear: none;
+		float: left;
+		height: 5px;
+		width: 5px;
+		margin:5px 5px 0 5px;
+	}
+
+	.menu li .close {
+		float: right;
+		font-size: 9px;
+		font-weight: normal;
+		height: 5px;
+		margin: 0 0 0 5px;
+		width: 5px;
 	}
