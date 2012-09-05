@@ -13,9 +13,9 @@
 	<div id=menu class='view menu'>
 		<div id=title><h1>Helper</h1></div>
 	    <ul>
-		    <li des='flatFilFormatContent' class='clickable' onclick='changeHelper(this)'>Flat File Helper</li>
-		    <li des='umsMailHelper' class='clickable' onclick='changeHelper(this)'>UMS Mail Helper</li>
-		    <li des='autoRole' class='clickable' onclick='changeHelper(this)'>Auto Data Prepare</li>
+		    <li des='flatFilFormatContent' onclick='changeHelper(this)'>Flat File Helper</li>
+		    <li des='umsMailHelper' onclick='changeHelper(this)'>UMS Mail Helper</li>
+		    <li des='autoRole' onclick='changeHelper(this)'>Auto Data Prepare</li>
 		</ul>
 	</div>
 	<div id=mainCon class='view'>
@@ -97,7 +97,7 @@
 			</td>
 			<td class='buttonRow'>
 				<div class=block>
-					<input type=button id='combineFile' value='>' class='button block clickable' onclick='combineFile()'/>
+					<input type=button id='combineFile' value='>' class='button block clickable' onclick='combineFileByDom()'/>
 				</div>
 			</td>
 			<td class='textTd'>
