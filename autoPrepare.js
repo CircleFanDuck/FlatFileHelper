@@ -144,13 +144,13 @@ Properties = [
 	{//10
 		condition:'Action',
 		title:'Action Code:',
-		val:[EMPTY, 'A', 'C', 'D'],
+		val:[EMPTY, 'A', 'D'],//, 'C'
 		change:roles
 	},
 	{//11
 		condition:'nextAction',
 		title:'Next Action Code:',
-		val:[EMPTY, ' ', 'EXTEND', 'REHIRE'],
+		val:[EMPTY, ' ', 'REHIRE'],//, 'EXTEND'
 		change:roles
 	},
 	{//12
@@ -284,6 +284,8 @@ var DEPT_MAP = {
 		
 		var conditionEles = this.roleCon.find('.condition_'+index+' [condition]');
 		var conditions = {};
+		
+		
 		for(var i = 0; i<conditionEles.length; i++){
 		    var ele = conditionEles.eq(i);
 			var val = ele.val();
@@ -298,6 +300,11 @@ var DEPT_MAP = {
 		env['sq'] =''+index;
 		env['sysdate'] = '20120904';
 		
+		var conditionName = [];
+		conditionName.push(this.roleCon.find('.role_12 .condition_'+index+' .val').text());
+		conditionName.push(env['sysdate']);
+		env['conditionName'] = conditionName.join(',');
+		env['sysdate'] = this.sysdate;
 		//TODO: option settings prefix:,sysdate:,offsetPreDate:,offsetAfterDate:
 		
 		env['SQLArr'] = this.autoParse.formatSql(env);
@@ -416,19 +423,22 @@ var DEPT_MAP = {
 	}
 	AutoParse.fn = AutoParse.prototype;
 	
-	AutoParse.fn.parstDeptId = function(deptId){
+	AutoParse.fn.parstDeptIdToSqlArr = function(deptId){
+	    var deptIdArr = this.parstDeptIdToArr(deptId);
+		
+		var deptSqlArr = [];
+		for(var i in deptIdArr){
+		    deptSqlArr.push("'" + deptIdArr[i] + "'");
+		}
+		
+		return deptSqlArr;
+	}
+	AutoParse.fn.parstDeptIdToArr = function(deptId){
 	    if(!deptId){
 		    return null;
 		}
-		
-	    var deptIdArr = getDeptDetail(deptId).split(',');
-		for(var i in deptIdArr){
-		    deptIdArr[i] = "'" + deptIdArr[i] + "'";
-		}
-		
-		return deptIdArr;
+		return getDeptArr(deptId);
 	}
-
 	AutoParse.fn.formatBasic = function(para){
 		var re = {};
 		if(!para.prefix){
@@ -446,19 +456,22 @@ var DEPT_MAP = {
 		var fDeptIdString = DEPT_MAP[2][condition[2]+condition[21]+condition[22]];
 		var oDeptIdString = DEPT_MAP[13][condition[13]];
 		
-		var cDeptId = this.parstDeptId(cDeptIdString);
-		var fDeptId = this.parstDeptId(fDeptIdString);
-		var oDeptId = this.parstDeptId(oDeptIdString);
-		if(cDeptId){
-		    re['cDeptId-staffN'] = "'"+cDeptId[2].substring(1,2) + re['staffN']+"'";
+		var cDeptId = this.parstDeptIdToSqlArr(cDeptIdString);
+		var fDeptId = this.parstDeptIdToSqlArr(fDeptIdString);
+		var oDeptId = this.parstDeptIdToSqlArr(oDeptIdString);
+		if(cDeptIdString){
+			var dept = this.parstDeptIdToArr(cDeptIdString)[2];
+		    re['cDeptId-staffN'] = "'"+dept+ re['staffN']+"'";
 			re['cDeptId'] = cDeptId.join(',');
 		}
-		if(fDeptId){
-		    re['fDeptId-staffN'] = "'"+fDeptId[2].substring(1,2) + re['staffN']+"'";
+		if(fDeptIdString){
+			var dept = this.parstDeptIdToArr(fDeptIdString)[2];
+		    re['fDeptId-staffN'] = "'" + dept + re['staffN']+"'";
 			re['fDeptId'] = fDeptId.join(',');
 		}
-		if(oDeptId){
-			re['oDeptId-staffN'] = "'"+oDeptId[2].substring(1,2) + re['staffN']+"'";
+		if(oDeptIdString){
+			var dept = this.parstDeptIdToArr(oDeptIdString)[2];
+			re['oDeptId-staffN'] = "'"+dept + re['staffN']+"'";
 			re['oDeptId'] = oDeptId.join(',');
 		}
 		
@@ -517,14 +530,14 @@ var DEPT_MAP = {
 		
 		if(env['deptTransfer']){
 			var deptTransfer = env['deptTransfer'];
-			var SQL = "INSERT INTO staff_transfer(ic_n,transfer_d,out_department_c,in_department_c)  VALUES ("
+			var SQL = "INSERT INTO STAFF_TRANSFER(ic_n,transfer_d,out_department_c,in_department_c)  VALUES ("
 			+ env['icNinSQL'] +"," + env['endDt'] + ", "+deptTransfer['out_department_c']+", "+deptTransfer['in_department_c']+");"
 			SettingSQLArr.push( SQL );
 		}
 		
 		if(env['sectionTransfer']){
 			var sectionTransfer = env['sectionTransfer'];
-			var SQL = "INSERT INTO staff_section_unit(ic_n, section_n, unit_c, effective_d) VALUES("
+			var SQL = "INSERT INTO STAFF_SECTION_UNIT(ic_n, section_n, unit_c, effective_d) VALUES("
 			+ env['icNinSQL'] +", "+sectionTransfer['section_n']+", "+sectionTransfer['unit_c']+", " + env['endDt'] + ");";
 			SettingSQLArr.push(SQL);
 		}
@@ -562,7 +575,7 @@ var DEPT_MAP = {
 		    RemoveSQLArr: RemoveSQLArr,
 			SettingSQLArr: SettingSQLArr,
 			EnquireSQLArr: EnquireSQLArr,
-			FlatFile: [msg+'<<<END'],
+			FlatFile: [msg+'<<<END['+para.conditionName+']'],
 			icN : env['icN']
 		};
 		
@@ -575,7 +588,13 @@ var DEPT_MAP = {
 		var valInput = td.appendNewEle('input').attr('id','defaultVal').width('300px');
 		var btn = td.appendNewEle('input', 'button').attr('id','createConditionBtn').width('100px').val('Create');
 		var btnClear = td.appendNewEle('input', 'button').attr('id','clearConditions').width('100px').val('Clear');
+		
+		td.appendNewEle('span').text('System date setting:');
+		var setting = td.appendNewEle('input').attr('id','sysdateSetting').width('100px').val('20120914');
+		baseRole.sysdate = setting.val();
+		
 		var label = td.appendNewEle('label').addClass('error');
+		
 		btnClear.click(function(){
 			baseRole.roleCon.empty().appendNewEle('tr').addClass('emptyNotice')
 				.appendNewEle('td').appendNewEle('label').text(EMPTY);
@@ -589,6 +608,9 @@ var DEPT_MAP = {
 			}
 			var properties = baseRole.properties;
 			baseRole.addRoleMultiple(properties, baseRole, {0:['title']}, defaultVal);
+		})
+		setting.change(function(){
+		    baseRole.sysdate = setting.val();
 		})
 		valInput.change(function(){
 			label.empty();
@@ -612,7 +634,7 @@ var DEPT_MAP = {
 			}
 			
 		    var title = publishTitle.appendNewEle('li').attr('index', index);
-			title.appendNewEle('div').attr('class', 'corner')
+			title.appendNewEle('span').attr('class', 'corner').text('o');
 			title.appendNewEle('span').attr('class','title').text(index);
 			title.appendNewEle('div').attr('class','close').attr('index', index).text('X');
 			
