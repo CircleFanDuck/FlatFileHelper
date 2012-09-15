@@ -120,7 +120,7 @@
 				return;
 			}
 			var value = jQuery.trim(file.substring(startPos, endPos));
-			if('TransId'==fieldName && value!=ruleName){
+			if(('TransId'==fieldName||'Trans Id'==fieldName) && value!=ruleName){
 			    //handle dif rule selected status
 			    $('#selRule').val(value);
 				if($('#selRule').val()!=value){
@@ -165,6 +165,7 @@
 			    printMsg('Wrong start/end pos for field ['+fieldName+']!');
 				return;
 			}
+			
 			if(value.length>(endPos-startPos)){
 			    printMsg('Value of ['+fieldName+'] is too long!');
 				return;
