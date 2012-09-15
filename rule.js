@@ -1,24 +1,24 @@
 (function(exports){
 	exports.RULE = []
 	var JOB = [];
-	JOB.push(['message type',0,1,1])
-	JOB.push(['Trans Id',1,16,'JOB'])
-	JOB.push(['Action(condition 10)',16,17])
+	JOB.push(['message type',0,1,'1'])
+	JOB.push(['TransId',1,16,'JOB'])
+	JOB.push(['Action',16,17])
 	JOB.push(['icN',43,54])
-	JOB.push(['userId',96,104])
+	JOB.push(['userId',96,104,'USERID'])
 	JOB.push(['oldDeptId',262,272])
 	JOB.push(['deptId',272,282])
-	JOB.push(['Start time',306,314])
-	JOB.push(['designation code',330,336])
-	JOB.push(['apptTyC',378,380])
+	JOB.push(['start Dt',306,314])
+	JOB.push(['designation code',330,336,'SLS'])
+	JOB.push(['apptTyC',378,380,'J'])
 	JOB.push(['psaEmplType',384,386])
-	JOB.push(['hireDt',394,402])
+	JOB.push(['hireDt',394,402,'19900101'])
 	JOB.push(['terminationDtAsString',426,434])
 	JOB.push(['oldNextStartAction',510,516])
-	JOB.push(['nextStartAction',516,522])
+	JOB.push(['nextAction',516,522])
 	JOB.push(['nextStartDt',530,538])
-	JOB.push(['End time',558,566])
-	JOB.push(['nameKnown',682,732])
+	JOB.push(['end Dt',558,566])
+	JOB.push(['nameKnown',682,732,'NAMEKNOWTEST'])
 
 	exports.RULE['JOB'] = JOB;
 	exports.RULE['JOB-example'] = "1JOB            CC20120803153839F7392632R  F7392632R  LSD   LSD                         YAPBH   YAPBH                         20120803201208040  0  ATAIYAP BOON HENG                                     YAP BOON HENG                                     PSASGPSASGP01TLS40--P01TLS40--P01P01TT4040    2011020120091030PSA01PSA01SLS   SLS   2011070120110701PSASTPSAST  001391001391J J PP    2009103020091030                        20120804        20120803SR LASHING SPECIALIST         SR LASHING SPECIALIST                                     TERMIN      20120804                                                                          YAP BOON HENG                                     YAP BOON HENG                                     ";
@@ -74,24 +74,23 @@
 	exports.RULE['DEL_ID'] = DEL_ID;
 
 	var SNPJOBF = [];
-	SNPJOBF.push(['Message type',0,1,1])
-	SNPJOBF.push(['Trans Id',1,16,'SNPJOBF'])
-	SNPJOBF.push(['Action (condition 10)',16,17])
+	SNPJOBF.push(['Message type',0,1,'1'])
+	SNPJOBF.push(['TransId',1,16,'SNPJOBF'])
+	SNPJOBF.push(['Action',16,17])
 	SNPJOBF.push(['icN',32,43])
 	SNPJOBF.push(['psaDeptC',43,49])
-	SNPJOBF.push(['userId',60,68])
+	SNPJOBF.push(['userId',60,68, 'USERID'])
 	SNPJOBF.push(['preEmpId',68,79])
 	SNPJOBF.push(['deptId',147,157])
-	SNPJOBF.push(['Start time',165,173])
-	SNPJOBF.push(['designation code',178,184])
-	SNPJOBF.push(['apptTyC',204,206])
+	SNPJOBF.push(['Start date',165,173])
+	SNPJOBF.push(['designation code',178,184,'SLS'])
+	SNPJOBF.push(['apptTyC',204,206,'J'])
 	SNPJOBF.push(['psaEmplType',207,209])
-	SNPJOBF.push(['hireDt',209,217])
-	SNPJOBF.push(['terminationDtAsString',225,233])
-	SNPJOBF.push(['nextStartAction',271,277])
+	SNPJOBF.push(['hireDt',209,217,'19900101'])
+	SNPJOBF.push(['nextAction',271,277])
 	SNPJOBF.push(['nextStartDt',277,285])
-	SNPJOBF.push(['End time',291,299])
-	SNPJOBF.push(['nameKnown',332,382])
+	SNPJOBF.push(['End date&termination date',291,299])
+	SNPJOBF.push(['nameKnown',332,382,'NAMEKNOWTEST'])
 	exports.RULE['SNPJOBF'] = SNPJOBF;
 	exports.RULE['SNPJOBF-example'] = "1SNPJOBF        AF20120803153832F1643139R  PPT1             WENWEI             201210010  TIWONG WEN WEI                                      PSASGP01TP390--P01T90  20110411PSA01CESYCO20110411PSAST 001683J P  20110411        2012041020120409CONT EQPT SPEC (YC)                                                                        WONG WEN WEI                                      "
 
